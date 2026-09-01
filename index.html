@@ -21,20 +21,38 @@
       <span class="brand-mark">◈</span>
       <span class="brand-name">Macronaut</span>
     </div>
-    <button id="unitToggle" class="unit-toggle" type="button" aria-label="Toggle units">
-      <span class="unit-option is-active" data-unit="metric">Metric</span>
-      <span class="unit-option" data-unit="imperial">Imperial</span>
-    </button>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab is-active" data-view="calculator" type="button">Calculator</button>
+      <button class="tab" data-view="plan" type="button">Plan</button>
+      <button class="tab" data-view="progress" type="button">Progress</button>
+      <button class="tab" data-view="friends" type="button">Friends</button>
+    </nav>
+
+    <div class="topbar-right">
+      <button id="unitToggle" class="unit-toggle" type="button" aria-label="Toggle units">
+        <span class="unit-option is-active" data-unit="metric">Metric</span>
+        <span class="unit-option" data-unit="imperial">Imperial</span>
+      </button>
+      <button id="accountButton" class="account-button" type="button">Sign in</button>
+      <div class="account-menu" id="accountMenu" hidden>
+        <button type="button" data-action="profile">Profile</button>
+        <button type="button" data-action="signout">Sign out</button>
+      </div>
+    </div>
   </header>
 
   <main class="shell">
-    <section class="hero">
+    <section class="hero" id="hero">
       <p class="eyebrow">Nutrition targets, calculated</p>
       <h1>Know exactly what to eat<br /><em>to reach your goal.</em></h1>
-      <p class="lede">Enter your stats and Macronaut works out your energy needs, then splits them into protein, carbs and fat — plus water, fiber and a realistic timeline.</p>
+      <p class="lede">Enter your stats and Macronaut works out your energy needs, then splits them into protein, carbs and fat — plus water, fiber and a step-by-step plan. Make an account to save your progress and follow friends.</p>
     </section>
 
-    <div class="grid">
+    <p class="offline-banner" id="offlineBanner" hidden>Accounts are offline — add your Supabase URL and anon key in <code>js/config.js</code>. The calculator and a local progress log still work.</p>
+
+    <!-- Calculator -->
+    <div class="grid view" data-view="calculator">
       <form id="calcForm" class="card panel" autocomplete="off">
         <h2 class="card-title">Your stats</h2>
 
@@ -100,6 +118,7 @@
         </div>
 
         <button class="cta" type="submit">Calculate my nutrition</button>
+        <p class="save-state" id="saveState"></p>
       </form>
 
       <section class="results" id="results" aria-live="polite">
@@ -169,11 +188,171 @@
       </section>
     </div>
 
+    <!-- Plan -->
+    <div class="view stack" data-view="plan" hidden>
+      <div class="card">
+        <h2 class="card-title">Your step-by-step plan</h2>
+        <ol class="plan-list" id="planList"></ol>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="view grid" data-view="progress" hidden>
+      <form class="card panel" id="progressForm" autocomplete="off">
+        <h2 class="card-title">Log today</h2>
+        <div class="field">
+          <label for="logDate">Date</label>
+          <div class="input-wrap"><input id="logDate" name="logged_on" type="date" required /></div>
+        </div>
+        <div class="field">
+          <label for="logWeight">Weight</label>
+          <div class="input-wrap"><input id="logWeight" name="weight" type="number" step="0.1" min="20" max="400" required /><span class="suffix" data-suffix="weight">kg</span></div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="logCalories">Calories</label>
+            <div class="input-wrap"><input id="logCalories" name="calories" type="number" step="1" min="0" max="12000" placeholder="optional" /><span class="suffix">kcal</span></div>
+          </div>
+          <div class="field">
+            <label for="logProtein">Protein</label>
+            <div class="input-wrap"><input id="logProtein" name="protein" type="number" step="1" min="0" max="500" placeholder="optional" /><span class="suffix">g</span></div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="logNote">Note</label>
+          <div class="input-wrap"><input id="logNote" name="note" type="text" maxlength="140" placeholder="How did the day go?" /></div>
+        </div>
+        <button class="cta" type="submit">Save entry</button>
+        <p class="save-state" id="progressState"></p>
+      </form>
+
+      <section class="results">
+        <div class="card chart-card">
+          <h2 class="card-title">Weight trend <span class="hint" id="trendSummary"></span></h2>
+          <svg class="chart" id="weightChart" viewBox="0 0 600 220" preserveAspectRatio="none" role="img" aria-label="Weight over time"></svg>
+          <p class="empty" id="chartEmpty">No entries yet — log your weight to start the trend.</p>
+        </div>
+        <div class="card history">
+          <h2 class="card-title">History</h2>
+          <ul class="entry-list" id="entryList"></ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- Friends -->
+    <div class="view grid" data-view="friends" hidden>
+      <div class="card panel">
+        <h2 class="card-title">Find people</h2>
+        <div class="field">
+          <label for="friendSearch">Username</label>
+          <div class="input-wrap"><input id="friendSearch" type="search" placeholder="search by username" /></div>
+        </div>
+        <ul class="people-list" id="searchResults"></ul>
+        <p class="empty" id="friendsGate" hidden>Sign in to add friends.</p>
+      </div>
+      <section class="results">
+        <div class="card">
+          <h2 class="card-title">Requests</h2>
+          <ul class="people-list" id="requestList"></ul>
+          <p class="empty" id="requestsEmpty">No pending requests.</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Friends</h2>
+          <ul class="people-list" id="friendList"></ul>
+          <p class="empty" id="friendsEmpty">No friends yet.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Profile -->
+    <div class="view stack" data-view="profile" hidden>
+      <form class="card profile-card" id="profileForm" autocomplete="off">
+        <h2 class="card-title">Your profile</h2>
+        <div class="profile-head">
+          <img class="avatar-lg" id="avatarPreview" alt="Profile picture" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23222'/%3E%3C/svg%3E" />
+          <div>
+            <label class="file-button" for="avatarInput">Change picture</label>
+            <input id="avatarInput" type="file" accept="image/*" hidden />
+            <p class="micro">Square images look best. Max 2 MB.</p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="profileUsername">Username</label>
+          <div class="input-wrap"><input id="profileUsername" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_\-]+" required /></div>
+        </div>
+        <div class="field">
+          <label for="profileBio">Bio</label>
+          <textarea id="profileBio" rows="4" maxlength="280" placeholder="A little about you"></textarea>
+        </div>
+        <button class="cta" type="submit">Save profile</button>
+        <p class="save-state" id="profileState"></p>
+      </form>
+    </div>
+
     <footer class="foot">
       <p>Estimates use the Mifflin–St Jeor equation. Not medical advice — talk to a professional before big diet changes.</p>
     </footer>
   </main>
 
-  <script src="app.js"></script>
+  <!-- Auth -->
+  <div class="modal-backdrop" id="authModal" hidden>
+    <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="modal-close" id="authClose" type="button" aria-label="Close">×</button>
+      <h2 class="card-title" id="authTitle">Sign in</h2>
+
+      <div class="auth-switch">
+        <button type="button" class="auth-tab is-active" data-auth="signin">Sign in</button>
+        <button type="button" class="auth-tab" data-auth="signup">Create account</button>
+      </div>
+
+      <form id="signinForm" class="auth-form">
+        <div class="field">
+          <label for="signinUsername">Username</label>
+          <div class="input-wrap"><input id="signinUsername" type="text" required autocomplete="username" /></div>
+        </div>
+        <div class="field">
+          <label for="signinPassword">Password</label>
+          <div class="input-wrap"><input id="signinPassword" type="password" required autocomplete="current-password" /></div>
+        </div>
+        <button class="cta" type="submit">Sign in</button>
+      </form>
+
+      <form id="emailForm" class="auth-form" hidden>
+        <p class="auth-step">Step 1 of 3 — verify your email</p>
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <div class="input-wrap"><input id="signupEmail" type="email" required autocomplete="email" placeholder="you@gmail.com" /></div>
+        </div>
+        <button class="cta" type="submit">Send verification code</button>
+      </form>
+
+      <form id="codeForm" class="auth-form" hidden>
+        <p class="auth-step">Step 2 of 3 — enter the 6 digit code we emailed you</p>
+        <div class="field">
+          <label for="signupCode">Verification code</label>
+          <div class="input-wrap"><input id="signupCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" /></div>
+        </div>
+        <button class="cta" type="submit">Verify email</button>
+        <button class="link-button" id="resendCode" type="button">Send the code again</button>
+      </form>
+
+      <form id="detailsForm" class="auth-form" hidden>
+        <p class="auth-step">Step 3 of 3 — choose how you'll sign in</p>
+        <div class="field">
+          <label for="signupUsername">Username</label>
+          <div class="input-wrap"><input id="signupUsername" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_\-]+" required autocomplete="username" /></div>
+        </div>
+        <div class="field">
+          <label for="signupPassword">Password</label>
+          <div class="input-wrap"><input id="signupPassword" type="password" minlength="8" required autocomplete="new-password" /></div>
+        </div>
+        <button class="cta" type="submit">Create account</button>
+      </form>
+
+      <p class="auth-message" id="authMessage"></p>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
