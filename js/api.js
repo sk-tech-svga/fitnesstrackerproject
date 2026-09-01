@@ -25,13 +25,16 @@ function unwrap({ data, error }) {
 }
 
 export const auth = {
-  /** Step 1 — email a six digit verification code. */
+  /** Step 1 — email a verification link (and code, if the template shows one). */
   async sendCode(email) {
     const db = required();
-    return unwrap(await db.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }));
+    const redirect = `${window.location.origin}${window.location.pathname}`;
+    return unwrap(
+      await db.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: redirect } })
+    );
   },
 
-  /** Step 2 — exchange the emailed code for a session. */
+  /** Step 2 — exchange a typed code for a session (the link does this on its own). */
   async verifyCode(email, token) {
     const db = required();
     return unwrap(await db.auth.verifyOtp({ email, token, type: "email" }));

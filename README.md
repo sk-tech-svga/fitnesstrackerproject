@@ -18,8 +18,9 @@ Metric and imperial units are both supported, and your inputs are saved in `loca
 ## Accounts
 
 With a Supabase project configured the site also has accounts: sign up with an email,
-verify the six digit code that lands in your inbox, then pick a username and password
-(you log in with the username). An account gets a profile picture, bio, friend
+open the verification link that lands in your inbox (or type the six digit code, if your
+email template shows one), then pick a username and password (you log in with the
+username). An account gets a profile picture, bio, friend
 requests, saved calculator stats and a weight/progress log with a trend chart.
 
 Without Supabase credentials the site runs offline: the calculator and the step by step
@@ -36,8 +37,9 @@ plan work as normal and progress entries are kept in `localStorage`.
    protects the data. Never put the service role key here.
 4. Under Authentication → Providers → Email make sure email is enabled, and add the
    site URL (e.g. the GitHub Pages URL) under Authentication → URL Configuration.
-5. Optional: Authentication → Email Templates → Magic Link — include `{{ .Token }}` so
-   the email shows the six digit code.
+5. Optional: with custom SMTP configured you can edit Authentication → Email Templates →
+   Magic Link to include `{{ .Token }}`; the signup form then also accepts the six digit
+   code instead of the link.
 
 ## Running locally
 

@@ -319,21 +319,23 @@
 
       <form id="emailForm" class="auth-form" hidden>
         <p class="auth-step">Step 1 of 3 — verify your email</p>
+        <p class="auth-hint">We email you a link. Open it on this device and you land back here to finish.</p>
         <div class="field">
           <label for="signupEmail">Email</label>
           <div class="input-wrap"><input id="signupEmail" type="email" required autocomplete="email" placeholder="you@gmail.com" /></div>
         </div>
-        <button class="cta" type="submit">Send verification code</button>
+        <button class="cta" type="submit">Email me a verification link</button>
       </form>
 
       <form id="codeForm" class="auth-form" hidden>
-        <p class="auth-step">Step 2 of 3 — enter the 6 digit code we emailed you</p>
+        <p class="auth-step">Step 2 of 3 — open the link in your inbox</p>
+        <p class="auth-hint">Check spam too. If your email shows a 6 digit code instead, type it here.</p>
         <div class="field">
-          <label for="signupCode">Verification code</label>
-          <div class="input-wrap"><input id="signupCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" /></div>
+          <label for="signupCode">Verification code (optional)</label>
+          <div class="input-wrap"><input id="signupCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" /></div>
         </div>
-        <button class="cta" type="submit">Verify email</button>
-        <button class="link-button" id="resendCode" type="button">Send the code again</button>
+        <button class="cta" type="submit">Verify code</button>
+        <button class="link-button" id="resendCode" type="button">Send the email again</button>
       </form>
 
       <form id="detailsForm" class="auth-form" hidden>

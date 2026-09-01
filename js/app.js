@@ -358,21 +358,23 @@ $("emailForm").addEventListener("submit", (event) => {
     state.pendingEmail = $("signupEmail").value.trim();
     await auth.sendCode(state.pendingEmail);
     authStep("code");
-    authMessage.textContent = `Code sent to ${state.pendingEmail}. It expires in 10 minutes.`;
+    authMessage.textContent = `Email sent to ${state.pendingEmail}. Open the link within an hour to verify.`;
   });
 });
 
 $("resendCode").addEventListener("click", (event) => {
   withBusy(event.target, async () => {
     await auth.sendCode(state.pendingEmail);
-    authMessage.textContent = "New code sent.";
+    authMessage.textContent = "Email sent again.";
   });
 });
 
 $("codeForm").addEventListener("submit", (event) => {
   event.preventDefault();
   withBusy(event.submitter, async () => {
-    await auth.verifyCode(state.pendingEmail, $("signupCode").value.trim());
+    const code = $("signupCode").value.trim();
+    if (!code) throw new Error("Open the link in your email, or type the code if the email shows one.");
+    await auth.verifyCode(state.pendingEmail, code);
     authStep("details");
     authMessage.textContent = "Email verified.";
   });
@@ -381,11 +383,13 @@ $("codeForm").addEventListener("submit", (event) => {
 $("detailsForm").addEventListener("submit", (event) => {
   event.preventDefault();
   withBusy(event.submitter, async () => {
-    await auth.completeSignup({
+    state.profile = await auth.completeSignup({
       username: $("signupUsername").value.trim(),
       password: $("signupPassword").value,
       email: state.pendingEmail,
     });
+    renderProfile();
+    queueCloudSave();
     closeAuth();
   });
 });
@@ -642,6 +646,15 @@ async function onUser(user) {
   }
 
   state.profile = await profiles.get(user.id);
+
+  // Verified through the emailed link but never finished signing up.
+  if (!state.profile) {
+    state.pendingEmail = user.email;
+    openAuth("signup");
+    authStep("details");
+    authMessage.textContent = `${user.email} is verified — pick a username and password.`;
+  }
+
   accountButton.textContent = state.profile?.username || "Account";
   renderProfile();
   applyStats(state.profile);
