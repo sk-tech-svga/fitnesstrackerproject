@@ -1,5 +1,10 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY, cloudEnabled } from "./config.js";
 
+// Emails are not readable through the API (see the column grants in
+// supabase/schema.sql), so profile reads always name their columns.
+const PROFILE_COLUMNS =
+  "id, username, avatar_url, bio, age, sex, height_cm, weight_kg, activity, goal, pace_kg, target_kg, unit";
+
 let client = null;
 
 if (cloudEnabled) {
@@ -40,7 +45,11 @@ export const auth = {
     unwrap(await db.auth.updateUser({ password }));
     const user = (await db.auth.getUser()).data.user;
     return unwrap(
-      await db.from("profiles").upsert({ id: user.id, username, email: email || user.email }).select().single()
+      await db
+        .from("profiles")
+        .upsert({ id: user.id, username, email: email || user.email })
+        .select(PROFILE_COLUMNS)
+        .single()
     );
   },
 
@@ -69,7 +78,7 @@ export const auth = {
 export const profiles = {
   async get(id) {
     const db = required();
-    const { data, error } = await db.from("profiles").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await db.from("profiles").select(PROFILE_COLUMNS).eq("id", id).maybeSingle();
     if (error) throw new Error(error.message);
     return data;
   },
@@ -80,7 +89,7 @@ export const profiles = {
       await db
         .from("profiles")
         .upsert({ id, ...patch, updated_at: new Date().toISOString() })
-        .select()
+        .select(PROFILE_COLUMNS)
         .single()
     );
   },

@@ -60,6 +60,14 @@ drop policy if exists "users update their own profile" on public.profiles;
 create policy "users update their own profile"
   on public.profiles for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
 
+-- Nobody reads anybody's email through the API: the login lookup below is the
+-- only path to it. Column grants do what RLS cannot express.
+revoke select on public.profiles from anon, authenticated;
+grant select (id, username, avatar_url, bio, age, sex, height_cm, weight_kg,
+              activity, goal, pace_kg, target_kg, unit, created_at, updated_at)
+  on public.profiles to authenticated;
+grant insert, update on public.profiles to authenticated;
+
 -- Friendships: visible to both sides, created by the requester, accepted by the addressee.
 drop policy if exists "friendships visible to both sides" on public.friendships;
 create policy "friendships visible to both sides"
